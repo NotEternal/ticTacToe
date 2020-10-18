@@ -67,10 +67,12 @@ function addUserElement(event) {
 function addMyElement() {
   const bestNumPosition = returnBestPosition();
 
-  arrSteps[bestNumPosition] = myArrElement;
-  mySteps.push(bestNumPosition);
-  arrGameItems[bestNumPosition].classList.add(myElement);
-  arrGameItems[bestNumPosition].style.pointerEvents = 'none';
+  if (typeof bestNumPosition === 'number') {
+    arrSteps[bestNumPosition] = myArrElement;
+    mySteps.push(bestNumPosition);
+    arrGameItems[bestNumPosition].classList.add(myElement);
+    arrGameItems[bestNumPosition].style.pointerEvents = 'none';
+  }
 
   checkWin();
 }
@@ -84,12 +86,16 @@ function returnBestPosition() {
     result = bestPositionOnSecondStep();
   }
 
+  if (!arrSteps.includes(null)) {
+    completeGame('Draw');
+  }
+
   return result;
 }
 
 function bestPositionOnFirstStep() {
   let result = null;
-  // best empty cell check
+  // checking best empty cell
   if (arrSteps[4] === null) {
     result = 4;
   } else if (arrSteps[0] === null) {
@@ -125,34 +131,40 @@ const WINS_COMBINATION = [
 ];
 
 function bestPositionOnSecondStep() {
-  let arrNumUserSteps = [];
+  const result = returnBlockPosition() || bestPositionOnFirstStep();
 
-  for (let i = 0; i < arrSteps.length; i += 1) {
-    if (arrSteps[i] === userArrElement) {
-      arrNumUserSteps.push(i);
-    }
-  }
-
-  return returnBlockPosition(arrNumUserSteps) || bestPositionOnFirstStep();
+  return result;
 }
 
-// TODO: fixed to return bad position
-// TODO: add best position for my element
-function returnBlockPosition(userSteps) {
-  let result = false;
+const arrBlockCombination = [];
+
+function returnBlockPosition() {
+  let result = null;
 
   WINS_COMBINATION.forEach((combination) => {
-    for (let i = 0; i < combination.length; i += 1) {
-      if (
-        combination.includes(userSteps[0]) &&
-        combination.includes(userSteps[1])
-      ) {
-        combination.forEach((numCell) => {
-          if (numCell !== userSteps[0] && numCell !== userSteps[1]) {
-            result = numCell;
-          }
-        });
+    let coincidences = 0;
+
+    userSteps.forEach((numStep) => {
+      if (combination.includes(numStep)) {
+        coincidences += 1;
       }
+    });
+
+    if (coincidences >= 2 && !arrBlockCombination.includes(combination)) {
+      const lastTwoUserSteps = userSteps.slice(userSteps.length - 2);
+
+      combination.forEach((numCell) => {
+        if (
+          numCell !== lastTwoUserSteps[0] &&
+          numCell !== lastTwoUserSteps[1] &&
+          !arrGameItems[numCell].classList.contains('item__cross') &&
+          !arrGameItems[numCell].classList.contains('item__zero')
+        ) {
+          result = numCell;
+        }
+      });
+
+      arrBlockCombination.push(combination);
     }
   });
 
